@@ -44,8 +44,8 @@ def prepare_data(input_sentence, submit_btn):
 	[State('input_sentence', 'value'),
 	 State('input_length', 'value')])
 def generate_article(n_clicks, input_sentence, input_length):
-	tokenizer = GPT2Tokenizer.from_pretrained("gpt2-large")
-	model = GPT2LMHeadModel.from_pretrained("gpt2-large", pad_token_id=tokenizer.eos_token_id)
+	tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+	model = GPT2LMHeadModel.from_pretrained("gpt2", pad_token_id=tokenizer.eos_token_id)
 	
 	if n_clicks:
 		if input_sentence:
