@@ -15,7 +15,7 @@ colors = {
 
 app.layout = html.Div(style={'backgroundColor': colors['background'], 'color': colors['text'], 'height':'100vh', 'width':'100%', 'height':'100%', 'top':'0px', 'left':'0px'}, 
 	children=[
-		html.H1(children='Writer Buddy v1.0'),
+		html.H1(children='Writer Buddy Lite'),
 		
 		dcc.Input(id='input_sentence', placeholder='Enter the first few words', type='text', style={'width': '50%'}),
 		html.Div([
@@ -53,9 +53,9 @@ def generate_article(n_clicks, input_sentence, input_length):
 			if not input_length:
 				input_length=100
 			try:
-				output = model.generate(input_ids, max_length=input_length, do_sample=True, temperature=1)
+				output = model.generate(input_ids, max_length=input_length)
 			except:
-				output = model.generate(input_ids, max_length=int(input_length), do_sample=True, temperature=1)
+				output = model.generate(input_ids, max_length=int(input_length))
 
 			text = tokenizer.decode(output[0], skip_special_tokens=True)
 			return html.Div([dcc.Markdown(text)])
