@@ -1,5 +1,4 @@
 dash
 gunicorn
 eventlet
-tensorflow
 transformers
