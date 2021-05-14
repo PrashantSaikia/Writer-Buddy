@@ -1,66 +1,56 @@
+from pywebio.input import input, input_group, TEXT, NUMBER, FLOAT, actions
+from pywebio.output import put_markdown, use_scope, clear
 from transformers import GPT2LMHeadModel, GPT2Tokenizer
-import dash
-from dash.dependencies import Output, Input, State
-import dash_core_components as dcc
-import dash_html_components as html
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash('Writer buddy', external_stylesheets=external_stylesheets)
-server = app.server
 
-colors = {
-	'background': '#ffffff',
-	'text': '#33B5FF'
-}
+def main():
+	put_markdown('# Writer Buddy')
 
-app.layout = html.Div(style={'backgroundColor': colors['background'], 'color': colors['text'], 'height':'100vh', 'width':'100%', 'height':'100%', 'top':'0px', 'left':'0px'}, 
-	children=[
-		html.H1(children='Writer Buddy Lite'),
-		
-		dcc.Input(id='input_sentence', placeholder='Enter the first few words', type='text', style={'width': '50%'}),
-		html.Div([
-			dcc.Input(id='input_length', placeholder='Enter the length of the article (default - 100 characters)', type='text', style={'width': '25%'}),
-		]),
+	try_another = True
 
-		html.Button('Submit', id='submit_btn', style={"margin-top": "15px"}),
-		html.H6(id='load', style={"margin-top": "25px"}),
-		html.H6(id='article_display', style={'height':'6vh', 'margin-top': '25px', 'font-size':'1.15em'}),
-	])
+	while True:
+		if try_another:
+			clear('B')
 
-@app.callback(Output('load', 'children'),
-              [Input('submit_btn', 'n_clicks')],
-              [State('input_sentence', 'value')])
-def prepare_data(input_sentence, submit_btn):
-	if submit_btn:
-		if input_sentence=='':
-			return dash.no_update
+			inputs = input_group('Inputs', [
+					  input('Enter the first few words', value='Once upon a time, ', type=TEXT, name='title'),
+					  input('Enter the number of characters in the article', value=100, type=NUMBER, name='length')
+					  ])
+
+			with use_scope('A'):
+				put_markdown("**Writing the article. Come back in a few minutes...**")
+
+			tokenizer = GPT2Tokenizer.from_pretrained("gpt2-large")
+			model = GPT2LMHeadModel.from_pretrained("gpt2-large", pad_token_id=tokenizer.eos_token_id)
+
+			if inputs['title']:
+				input_ids = tokenizer.encode(inputs['title'], return_tensors='pt')
+
+				output = model.generate(input_ids, max_length=inputs['length'], do_sample=True, temperature=1)
+										# num_beams=8, no_repeat_ngram_size=2, early_stopping=True
+
+				text = tokenizer.decode(output[0], skip_special_tokens=True)
+
+				clear('A')
+
+				with use_scope('B'):
+					put_markdown(text)
+
+				try_another = actions(label="Would you like to try another?", 
+									  buttons=[{'label': 'Yes', 'value': True}, 
+											   {'label':'No', 'value': False}])
+
 		else:
-			return html.Div([dcc.Markdown(
-				'''Writing the article, come back in a few minutes...''')], id='article_display')
-
-@app.callback(
-	Output('article_display', 'children'),
-	[Input('submit_btn', 'n_clicks')],
-	[State('input_sentence', 'value'),
-	 State('input_length', 'value')])
-def generate_article(n_clicks, input_sentence, input_length):
-	tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-	model = GPT2LMHeadModel.from_pretrained("gpt2", pad_token_id=tokenizer.eos_token_id)
-	
-	if n_clicks:
-		if input_sentence:
-			input_ids = tokenizer.encode(input_sentence, return_tensors='pt')
-			if not input_length:
-				input_length=100
-			try:
-				output = model.generate(input_ids, max_length=input_length)
-			except:
-				output = model.generate(input_ids, max_length=int(input_length))
-
-			text = tokenizer.decode(output[0], skip_special_tokens=True)
-			return html.Div([dcc.Markdown(text)])
-	else:
-  		return dash.no_update
-		
+			clear('B')
+			put_markdown('Thanks for trying out Writer Buddy.')
+			break
+			
 if __name__ == '__main__':
-	app.run_server(debug=True)
+    import argparse
+    from pywebio.platform.tornado_http import start_server
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--port", type=int, default=8080)
+    args = parser.parse_args()
+
+    start_server(main, port=args.port)
