@@ -1,10 +1,8 @@
 from pywebio.input import input, input_group, TEXT, NUMBER, FLOAT, actions, radio
 from pywebio.output import put_markdown, use_scope, clear
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, pipeline
-import argparse
-from pywebio import start_server
 
-def app():
+def main():
 	put_markdown('# Writer Buddy')
 	try_another = True
 
@@ -64,7 +62,11 @@ def app():
 				with open('Genereted Text Samples/{}.txt'.format(outputs['save_location'].split('txt')[0]), 'w') as f:
 					f.write(text)
 if __name__ == '__main__':
+    import argparse
+    from pywebio.platform.tornado_http import start_server
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--port", type=int, default=8080)
     args = parser.parse_args()
-    start_server(predict, port=args.port)
+
+    start_server(main, port=args.port)
